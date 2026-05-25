@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Reminder</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <main class="content">
+
+        <h1 class="page-title">Edit Reminder</h1>
+
+        <div class="card">
+            <form method="POST" action="/update-reminder">
+
+                <input type="hidden" name="id" value="{{ reminder[0] }}">
+
+                <div class="form-group">
+                    <label class="label">Message</label>
+                    <input type="text"
+                           name="text"
+                           value="{{ reminder[1] }}"
+                           class="datetime-input"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Date & Time</label>
+                    <input type="datetime-local"
+                           name="time"
+                           value="{{ reminder[2] | replace(' ', 'T') }}"
+                           class="datetime-input"
+                           required>
+                </div>
+
+                <button class="save-btn">Update Reminder</button>
+            </form>
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

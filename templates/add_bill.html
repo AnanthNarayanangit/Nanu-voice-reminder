@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Bill</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <h2 class="logo">🔔 Reminders</h2>
+
+        <a href="/recordings" class="nav-link">
+            ← Back
+        </a>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <h1 class="page-title">Add New Bill</h1>
+        <p class="subtitle">
+            Create a new bill and schedule a monthly reminder
+        </p>
+
+        <div class="card">
+
+            <form method="POST" action="/add-bill">
+
+                <!-- BILL NAME -->
+                <div class="form-group">
+                    <label class="label">Bill Name</label>
+                    <input
+                        type="text"
+                        name="bill_name"
+                        class="datetime-input"
+                        placeholder="Example: Water Bill"
+                        required>
+                </div>
+
+                <!-- DAY -->
+                <div class="form-group">
+                    <label class="label">Day of Month</label>
+                    <input
+                        type="number"
+                        name="day"
+                        min="1"
+                        max="31"
+                        class="datetime-input"
+                        required>
+                </div>
+
+                <!-- TIME -->
+                <div class="form-group">
+                    <label class="label">Time</label>
+                    <input
+                        type="time"
+                        name="time"
+                        class="datetime-input"
+                        required>
+                </div>
+
+                <button class="save-btn">
+                    Add Bill & Schedule
+                </button>
+
+            </form>
+
+        </div>
+
+    </main>
+</div>
+
+</body>
+</html>

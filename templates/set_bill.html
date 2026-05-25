@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Set Bill</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <nav class="sidebar">
+        <h2 class="logo">🔔 Reminders</h2>
+        <a href="/recordings" class="nav-link">← Back</a>
+    </nav>
+
+    <main class="content">
+
+        <h1 class="page-title">Set {{ bill_name }} Bill</h1>
+        <p class="subtitle">Choose day and time for monthly reminder</p>
+
+        <div class="card">
+
+            <!-- THIS FORM IS CRITICAL -->
+            <form method="POST" action="/save-bill">
+
+                <!-- MUST SEND BILL NAME -->
+                <input type="hidden" name="bill_name" value="{{ bill_name }}">
+
+                <div class="form-group">
+                    <label class="label">Day of Month</label>
+                    <input type="number"
+                           name="day"
+                           min="1"
+                           max="31"
+                           class="datetime-input"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Time</label>
+                    <input type="time"
+                           name="time"
+                           class="datetime-input"
+                           required>
+                </div>
+
+                <button class="save-btn">
+                    Save Monthly Reminder
+                </button>
+
+            </form>
+
+        </div>
+
+    </main>
+</div>
+
+</body>
+</html>

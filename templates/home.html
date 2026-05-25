@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Voice Reminder</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <h2 class="logo">🎙 Voice Reminder</h2>
+
+        <a href="/" class="nav-link active">
+            <i class="fa-solid fa-microphone"></i>
+            Home
+        </a>
+
+        <a href="/recordings" class="nav-link">
+            <i class="fa-solid fa-folder-open"></i>
+            Recordings
+        </a>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <h1 class="page-title">Create a Reminder</h1>
+        <p class="subtitle">
+            Record your reminder by voice or type it manually in your preferred language.
+        </p>
+
+        <div class="card">
+
+            <!-- LANGUAGE SELECT -->
+            <div class="form-group">
+                <label class="label">
+                    <i class="fa-solid fa-language"></i>
+                    Language
+                </label>
+
+                <select id="language" class="datetime-input">
+                    <option value="en-IN">English</option>
+                    <option value="ta-IN">தமிழ் (Tamil)</option>
+                    <option value="hi-IN">हिन्दी (Hindi)</option>
+                </select>
+            </div>
+
+            <!-- RECORD SECTION -->
+            <div class="record-section">
+                <button class="mic-btn" onclick="startRecording()">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+
+                <p class="hint">Click the microphone and speak</p>
+            </div>
+
+            <!-- TEXT INPUT -->
+            <div class="form-group">
+                <label class="label">
+                    <i class="fa-solid fa-pen"></i>
+                    Reminder Text
+                </label>
+
+                <textarea id="text"
+                          class="text-area"
+                          placeholder="Type your reminder here..."></textarea>
+            </div>
+
+            <!-- DELETE -->
+            <button class="delete-icon-btn" onclick="deleteRecording()"
+                    title="Clear text">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+
+            <!-- SCHEDULE -->
+            <div class="form-group">
+                <label class="label">
+                    <i class="fa-regular fa-calendar"></i>
+                    Schedule Reminder
+                </label>
+
+                <input type="datetime-local"
+                       id="datetime"
+                       class="datetime-input">
+            </div>
+
+            <!-- SAVE -->
+            <button class="save-btn" onclick="saveReminder()">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save Reminder
+            </button>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
