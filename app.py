@@ -5,6 +5,7 @@ import time
 import json
 import threading
 import calendar
+import logging
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from urllib.parse import unquote
@@ -16,6 +17,8 @@ from openai import OpenAI
 
 # ================= APP CONFIG =================
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 DB_NAME = "reminders.db"
 AUDIO_FOLDER = "static/audio"
@@ -23,8 +26,14 @@ AUDIO_FOLDER = "static/audio"
 if not os.path.isdir(AUDIO_FOLDER):
     os.makedirs(AUDIO_FOLDER)
 
-# ================= OPENAI =================
-client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+# ================= CREDENTIALS & CLIENTS =================
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD")
+
+client = None
+if OPENAI_API_KEY and OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+    client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ================= DATABASE =================
 def get_db():
@@ -64,6 +73,10 @@ def init_db():
 
 # ================= AI HELPER =================
 def ai_extract_reminder(text):
+    if not OPENAI_API_KEY or OPENAI_API_KEY == "YOUR_OPENAI_API_KEY" or not client:
+        logger.info("OpenAI API key not configured or default; skipping AI extraction.")
+        return {}
+
     prompt = f"""
 Extract reminder information from the text.
 
@@ -74,22 +87,30 @@ Return ONLY valid JSON:
 
 Text: "{text}"
 """
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return json.loads(response.choices[0].message.content)
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception as e:
+        logger.error(f"AI reminder extraction failed: {e}")
+        return {}
 
 # ================= EMAIL =================
 def send_email(text):
+    if not SMTP_EMAIL or not SMTP_APP_PASSWORD or SMTP_EMAIL == "YOUR_EMAIL@gmail.com":
+        logger.warning("SMTP credentials not configured; skipping email dispatch.")
+        return
+
     msg = EmailMessage()
     msg.set_content(text)
     msg["Subject"] = "🔔 Reminder"
-    msg["From"] = "YOUR_EMAIL@gmail.com"
-    msg["To"] = "YOUR_EMAIL@gmail.com"
+    msg["From"] = SMTP_EMAIL
+    msg["To"] = SMTP_EMAIL
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login("YOUR_EMAIL@gmail.com", "YOUR_APP_PASSWORD")
+        server.login(SMTP_EMAIL, SMTP_APP_PASSWORD)
         server.send_message(msg)
 
 # ================= SCHEDULER =================
@@ -98,43 +119,49 @@ def check_reminders():
     cur = conn.cursor()
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    cur.execute("""
-        SELECT id, text, time, recurring
-        FROM reminders
-        WHERE sent = 0 OR recurring = 1
-    """)
+    try:
+        cur.execute("""
+            SELECT id, text, time, recurring
+            FROM reminders
+            WHERE sent = 0 OR recurring = 1
+        """)
 
-    reminders = cur.fetchall()
+        reminders = cur.fetchall()
 
-    for rid, text, reminder_time, recurring in reminders:
-        if reminder_time and reminder_time[:16] == now:
-            send_email(text)
-
-            if recurring:
-                dt = datetime.strptime(reminder_time, "%Y-%m-%d %H:%M")
-                month = dt.month + 1
-                year = dt.year
-                if month > 12:
-                    month = 1
-                    year += 1
+        for rid, text, reminder_time, recurring in reminders:
+            if reminder_time and reminder_time[:16] == now:
                 try:
-                    next_dt = dt.replace(year=year, month=month)
-                except ValueError:
-                    next_dt = dt.replace(year=year, month=month, day=28)
+                    send_email(text)
+                except Exception as e:
+                    logger.error(f"Failed to send email for reminder {rid}: {e}")
 
-                cur.execute(
-                    "UPDATE reminders SET time = ? WHERE id = ?",
-                    (next_dt.strftime("%Y-%m-%d %H:%M"), rid)
-                )
-            else:
-                cur.execute(
-                    "UPDATE reminders SET sent = 1 WHERE id = ?",
-                    (rid,)
-                )
+                if recurring:
+                    dt = datetime.strptime(reminder_time, "%Y-%m-%d %H:%M")
+                    month = dt.month + 1
+                    year = dt.year
+                    if month > 12:
+                        month = 1
+                        year += 1
+                    try:
+                        next_dt = dt.replace(year=year, month=month)
+                    except ValueError:
+                        next_dt = dt.replace(year=year, month=month, day=28)
 
-            conn.commit()
+                    cur.execute(
+                        "UPDATE reminders SET time = ? WHERE id = ?",
+                        (next_dt.strftime("%Y-%m-%d %H:%M"), rid)
+                    )
+                else:
+                    cur.execute(
+                        "UPDATE reminders SET sent = 1 WHERE id = ?",
+                        (rid,)
+                    )
 
-    conn.close()
+                conn.commit()
+    except Exception as e:
+        logger.error(f"Error checking reminders: {e}")
+    finally:
+        conn.close()
 
 def run_scheduler():
     schedule.every(1).minute.do(check_reminders)
@@ -303,6 +330,9 @@ def save():
         except:
             pass
 
+    if datetime_value:
+        datetime_value = datetime_value.replace("T", " ")
+
     audio_filename = None
     if audio_file:
         audio_filename = secure_filename(f"{int(time.time())}.webm")
@@ -355,6 +385,9 @@ def update_reminder():
     rid = request.form.get("id")
     text = request.form.get("text")
     time_val = request.form.get("time")
+
+    if time_val:
+        time_val = time_val.replace("T", " ")
 
     conn = get_db()
     cur = conn.cursor()
