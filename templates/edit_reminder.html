@@ -31,7 +31,7 @@
                     <label class="label">Date & Time</label>
                     <input type="datetime-local"
                            name="time"
-                           value="{{ reminder[2] | replace(' ', 'T') }}"
+                           value="{{ (reminder[2] or '') | replace(' ', 'T') }}"
                            class="datetime-input"
                            required>
                 </div>

@@ -286,6 +286,9 @@ def save():
         except:
             pass
 
+    if datetime_value:
+        datetime_value = datetime_value.replace("T", " ")
+
     audio_filename = None
     if audio_file:
         audio_filename = secure_filename(f"{int(time.time())}.webm")
@@ -327,6 +330,9 @@ def update_reminder():
     rid = request.form.get("id")
     text = request.form.get("text")
     time_val = request.form.get("time")
+
+    if time_val:
+        time_val = time_val.replace("T", " ")
 
     conn = get_db()
     cur = conn.cursor()
