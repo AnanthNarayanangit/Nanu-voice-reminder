@@ -197,6 +197,11 @@ audio {
 /* =====================
    ELLIPSIS MENU
 ===================== */
+.actions-cell {
+    position: relative;
+    text-align: right;
+}
+
 .ellipsis-btn {
     background: none;
     border: none;
