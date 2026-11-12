@@ -4,6 +4,7 @@ import os
 import time
 import json
 import threading
+import calendar
 import logging
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -201,8 +202,24 @@ def set_bill(bill):
 @app.route("/save-bill", methods=["POST"])
 def save_bill():
     bill_name = request.form.get("bill_name")
-    day = int(request.form.get("day"))
+    day_val = request.form.get("day")
     time_value = request.form.get("time")
+
+    if not bill_name or not bill_name.strip():
+        return redirect("/recordings")
+
+    bill_name = bill_name.strip()
+
+    try:
+        day = int(day_val)
+    except (TypeError, ValueError):
+        return redirect("/recordings")
+
+    if day < 1 or day > 31:
+        return redirect("/recordings")
+
+    if not time_value:
+        time_value = "09:00"
 
     now = datetime.now()
     month = now.month
@@ -214,7 +231,10 @@ def save_bill():
             month = 1
             year += 1
 
-    reminder_time = f"{year}-{month:02d}-{day:02d} {time_value}"
+    max_days = calendar.monthrange(year, month)[1]
+    clamped_day = min(day, max_days)
+
+    reminder_time = f"{year}-{month:02d}-{clamped_day:02d} {time_value}"
 
     conn = get_db()
     cur = conn.cursor()
@@ -238,8 +258,24 @@ def add_bill():
 @app.route("/add-bill", methods=["POST"])
 def add_bill_post():
     bill_name = request.form.get("bill_name")
-    day = int(request.form.get("day"))
+    day_val = request.form.get("day")
     time_value = request.form.get("time")
+
+    if not bill_name or not bill_name.strip():
+        return redirect("/add-bill")
+
+    bill_name = bill_name.strip()
+
+    try:
+        day = int(day_val)
+    except (TypeError, ValueError):
+        return redirect("/add-bill")
+
+    if day < 1 or day > 31:
+        return redirect("/add-bill")
+
+    if not time_value:
+        time_value = "09:00"
 
     now = datetime.now()
     month = now.month
@@ -251,7 +287,10 @@ def add_bill_post():
             month = 1
             year += 1
 
-    reminder_time = f"{year}-{month:02d}-{day:02d} {time_value}"
+    max_days = calendar.monthrange(year, month)[1]
+    clamped_day = min(day, max_days)
+
+    reminder_time = f"{year}-{month:02d}-{clamped_day:02d} {time_value}"
 
     conn = get_db()
     cur = conn.cursor()
@@ -276,6 +315,11 @@ def save():
     text = request.form.get("text")
     datetime_value = request.form.get("datetime")
     audio_file = request.files.get("audio")
+
+    if not text or not text.strip():
+        return jsonify({"error": "Reminder text cannot be empty", "message": "Reminder text cannot be empty"}), 400
+
+    text = text.strip()
 
     if not datetime_value:
         try:
@@ -310,6 +354,17 @@ def save():
 def delete_reminder(rid):
     conn = get_db()
     cur = conn.cursor()
+    cur.execute("SELECT audio FROM reminders WHERE id = ?", (rid,))
+    row = cur.fetchone()
+    if row and row[0]:
+        audio_filename = row[0]
+        audio_path = os.path.join(AUDIO_FOLDER, audio_filename)
+        if os.path.exists(audio_path):
+            try:
+                os.remove(audio_path)
+            except OSError:
+                pass
+
     cur.execute("DELETE FROM reminders WHERE id = ?", (rid,))
     conn.commit()
     conn.close()
