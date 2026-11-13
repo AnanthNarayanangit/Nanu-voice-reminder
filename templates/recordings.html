@@ -71,10 +71,22 @@
                         <!-- AUDIO -->
                         <td style="padding:16px 0; border-top:1px solid #e5e7eb;">
                             {% if r[3] %}
-                            <audio controls style="width:200px;">
-                                <source src="/static/audio/{{ r[3] }}" type="audio/webm">
-                                Your browser does not support audio.
-                            </audio>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <audio id="audio-{{ r[0] }}" controls style="width:200px;">
+                                    <source src="/static/audio/{{ r[3] }}" type="audio/webm">
+                                    Your browser does not support audio.
+                                </audio>
+                                <select class="speed-selector"
+                                        title="Playback Speed"
+                                        aria-label="Playback Speed"
+                                        onchange="changePlaybackSpeed('audio-{{ r[0] }}', this.value)"
+                                        style="padding:4px 6px; border-radius:6px; border:1px solid #cbd5e1; font-size:12px; background:#f8fafc; color:#334155; cursor:pointer;">
+                                    <option value="1" selected>1x</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2">2x</option>
+                                </select>
+                            </div>
                             {% else %}
                             <span style="font-size:13px; color:#94a3b8;">
                                 No Audio
@@ -152,9 +164,18 @@
 </div>
 
 <!-- ===================== -->
-<!-- DROPDOWN SCRIPT -->
+<!-- SCRIPTS -->
 <!-- ===================== -->
 <script>
+function changePlaybackSpeed(audioId, selectedSpeed) {
+    const audioElement = typeof audioId === "string" ? document.getElementById(audioId) : audioId;
+    if (audioElement) {
+        selectedSpeed = parseFloat(selectedSpeed);
+        audioElement.playbackRate = selectedSpeed;
+    }
+}
+const setPlaybackSpeed = changePlaybackSpeed;
+
 function toggleMenu(id) {
     document.querySelectorAll(".dropdown-menu").forEach(menu => {
         if (menu.id !== "menu-" + id) {
